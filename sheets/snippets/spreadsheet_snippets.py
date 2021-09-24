@@ -12,6 +12,85 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from googleapiclient import discovery
+import os.path
+import pandas as pd
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+
+# If modifying these scopes, delete the file token.json.
+SCOPES = ['https://www.googleapis.com/auth/drive']
+
+# data = {'col1':  ['One','Two','Three', 'Four'],
+#         'col2': ['1', '2','3','4']
+#         }
+
+# df = pd.DataFrame(data)
+
+
+# The ID and range of a sample spreadsheet.
+# SAMPLE_SPREADSHEET_ID = '14l30ujbE4_SzIteY7a8fKBqQO2FV9ri1Yd0DFSlQgc4'
+# SAMPLE_RANGE_NAME = 'Example!A1:B4'
+spreadsheet_id = '1WZTyqRtIvVYTGT1EhnjhEYlWMdcVYO4piDCYL7VGyjg'
+my_range = 'InputData!A1:D10'
+#	The values will be parsed as if the user typed them into the UI. Numbers will stay as numbers, 
+# but strings may be converted to numbers, dates, etc. following the same rules that are applied 
+# when entering text into a cell via the Google Sheets UI.
+my_value_input_option = 'USER_ENTERED'
+# my_values = [
+#             ["1","2","3","4"],
+#             ["5","6","7","8"],
+            
+#             # Additional rows ...
+#         ]
+
+data = {'col1':  ['9','7','37','49'],
+'col2': ['53', '61','76','84'] }
+
+df = pd.DataFrame(data)
+
+my_values = [
+            [i for i in df['col1']],
+            [i for i in df['col2']],
+]
+
+
+
+
+# get_values(spreadsheet_id,range_name)
+
+def main():
+    """credentials setup; requests token from API for SCOPE above."""
+    creds = None
+    # The file token.json stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
+
+    service = build('sheets', 'v4', credentials=creds)
+    snip = SpreadsheetSnippets(service)
+
+    """workflow for a specific spreadsheet"""
+    #obtaining values
+    snip.get_values(spreadsheet_id, my_range)
+
+    #writing values in 
+    snip.update_values(spreadsheet_id, my_range, my_value_input_option, my_values)
+
 from __future__ import print_function
 
 class SpreadsheetSnippets(object):
@@ -390,3 +469,6 @@ class SpreadsheetSnippets(object):
         updateFilterViewResponse = service.spreadsheets() \
            .batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
         # [END sheets_filter_views]
+
+if __name__ == '__main__':
+    main()
