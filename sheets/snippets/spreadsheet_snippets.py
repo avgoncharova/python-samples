@@ -390,3 +390,4 @@ class SpreadsheetSnippets(object):
         updateFilterViewResponse = service.spreadsheets() \
            .batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
         # [END sheets_filter_views]
+        
